@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>عزيمة على قد الميزانية – ديمو فكرة</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:#10205a;color:#fff;padding:20px;min-height:100vh}
+.w{max-width:480px;margin:0 auto}
+h1{color:#fcd20f;font-size:30px;line-height:1.35;margin:8px 0}
+.sub{opacity:.85;margin:0 0 16px}
+.card{background:#f7f6f2;color:#10205a;border-radius:18px;padding:18px;margin-bottom:16px}
+label{display:block;font-weight:800;margin:12px 0 6px}
+.row{display:flex;justify-content:space-between;align-items:center}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:9px 14px;border-radius:20px;background:#e6e9fb;cursor:pointer;font-weight:700;border:2px solid transparent}
+.chip.on{background:#fcd20f;border-color:#10205a}
+input[type=range]{width:100%;accent-color:#1f3fd1}
+input[type=number]{width:100%;padding:13px;border-radius:12px;border:2px solid #cfd3e6;font-size:18px;font-family:inherit}
+button{width:100%;margin-top:14px;padding:15px;border:0;border-radius:12px;background:#fcd20f;color:#10205a;font-size:18px;font-weight:800;font-family:inherit;cursor:pointer}
+.it{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed #cfd3e6}
+.tot{font-size:36px;font-weight:900;color:#1f3fd1}
+.ok{background:#e3f6e8;color:#14532d;padding:10px;border-radius:10px;font-weight:700;margin-top:10px}
+.bad{background:#fde8e8;color:#7f1d1d;padding:10px;border-radius:10px;font-weight:700;margin-top:10px}
+.note{font-size:12px;opacity:.75;text-align:center;line-height:1.8;margin-top:12px}
+#out{display:none}
+</style></head><body><div class="w">
+<h1>عزيمة على قد الميزانية 🍽️</h1>
+<p class="sub">قول لي كم ضيف وكم ميزانيتك، وأطلع لك السلة جاهزة.</p>
+
+<div class="card">
+<label>نوع العزيمة</label>
+<div class="chips" id="occ"></div>
+<label><span class="row"><span>عدد الضيوف</span><b id="gv">8</b></span></label>
+<input type="range" id="g" min="2" max="40" value="8">
+<label>ميزانيتك (ريال)</label>
+<input type="number" id="b" inputmode="numeric" value="250" min="10">
+<button id="go">جهّز السلة</button>
+</div>
+
+<div class="card" id="out">
+<div id="list"></div>
+<div class="row" style="margin-top:12px"><span>المجموع</span><span class="tot" id="tot"></span></div>
+<div id="msg"></div>
+<button id="cp">انسخ القائمة</button>
+</div>
+
+<p class="note">ديمو فكرة غير رسمي وليس من كيو. الأسعار والكميات تقريبية للتوضيح فقط.<br>صُنع بمساعدة الذكاء الاصطناعي (Claude)، والفكرة والتوجيه مني.</p>
+</div>
+<script>
+// [اسم, كمية للشخص, وحدة, سعر الوحدة تقريبي, أساسي؟]
+var D={
+ "كبسة":[["أرز بسمتي (كجم)",0.12,"كجم",14,1],["دجاج (كجم)",0.25,"كجم",16,1],["بصل وطماطم (كجم)",0.06,"كجم",4,1],["بهارات كبسة",0.01,"علبة",9,1],["مشروب غازي",0.7,"حبة",2.5,0],["سلطة وروب",0.1,"كجم",9,0],["حلا",0.5,"حبة",3,0]],
+ "شاي العصر":[["شاي (علبة)",0.04,"علبة",12,1],["سكر (كجم)",0.03,"كجم",4,1],["حليب (لتر)",0.12,"لتر",6,1],["بسكويت وكيك",0.6,"حبة",2.5,0],["تمر (كجم)",0.06,"كجم",18,0],["ماء",0.5,"حبة",1,0]],
+ "مشاوي":[["لحم/دجاج مشاوي (كجم)",0.3,"كجم",30,1],["خبز",1,"حبة",0.8,1],["فحم (كيس)",0.04,"كيس",14,1],["خضار سلطة (كجم)",0.1,"كجم",5,1],["مشروب",1,"حبة",2.5,0],["صوصات",0.2,"حبة",3,0]]
+};
+var occ="كبسة";
+var oc=document.getElementById("occ");
+Object.keys(D).forEach(function(k){var c=document.createElement("div");c.className="chip"+(k===occ?" on":"");c.textContent=k;c.onclick=function(){occ=k;[].forEach.call(oc.children,function(x){x.classList.remove("on")});c.classList.add("on")};oc.appendChild(c)});
+var g=document.getElementById("g");g.oninput=function(){document.getElementById("gv").textContent=g.value};
+function ar(n){return String(n).replace(/\d/g,function(d){return "٠١٢٣٤٥٦٧٨٩"[d]})}
+var txt="";
+document.getElementById("go").onclick=function(){
+ var n=+g.value,b=+document.getElementById("b").value||0;
+ var items=D[occ].map(function(r){var q=Math.max(1,Math.ceil(r[1]*n*10)/10);if(r[2]==="حبة"||r[2]==="علبة"||r[2]==="كيس")q=Math.max(1,Math.ceil(r[1]*n));return{n:r[0],q:q,u:r[2],p:q*r[3],core:r[4]}});
+ var total=items.reduce(function(s,i){return s+i.p},0);
+ var kept=items.slice(),dropped=[];
+ // لو فوق الميزانية، نشيل الكماليات من الأغلى
+ var opt=kept.filter(function(i){return !i.core}).sort(function(a,b){return b.p-a.p});
+ var t=total;
+ for(var k=0;k<opt.length&&t>b;k++){dropped.push(opt[k].n);t-=opt[k].p;kept=kept.filter(function(i){return i!==opt[k]})}
+ var h="";kept.forEach(function(i){h+='<div class="it"><span>'+i.n+' × '+ar(i.q)+'</span><b>'+ar(Math.round(i.p))+' ر</b></div>'});
+ document.getElementById("list").innerHTML=h;
+ document.getElementById("tot").textContent=ar(Math.round(t))+" ر";
+ var m=document.getElementById("msg");
+ if(t<=b){m.className="ok";m.textContent="✓ داخل الميزانية ووفرت "+ar(Math.round(b-t))+" ريال"+(dropped.length?" (شلنا: "+dropped.join("، ")+")":"")}
+ else{m.className="bad";m.textContent="فوق ميزانيتك بـ "+ar(Math.round(t-b))+" ريال حتى بعد حذف الكماليات. قلّل الضيوف أو زد الميزانية."}
+ txt="عزيمة "+occ+" لـ "+ar(n)+" ضيف:\n"+kept.map(function(i){return "- "+i.n+" × "+ar(i.q)}).join("\n")+"\nالمجموع التقريبي: "+ar(Math.round(t))+" ريال";
+ document.getElementById("out").style.display="block";
+ document.getElementById("out").scrollIntoView({behavior:"smooth"});
+};
+document.getElementById("cp").onclick=function(){var b=this;try{navigator.clipboard.writeText(txt).then(function(){b.textContent="تم النسخ ✓"})}catch(e){b.textContent="انسخه يدويًا"}};
+</script></body></html>
